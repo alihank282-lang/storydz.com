@@ -3,74 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مولّد موقع StoryDZ</title>
+<title>لوحة تحكم StoryDZ</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="stylesheet" href="admin.css">
 </head>
 <body>
 
-<header class="admin-header">
-  <h1>🏗️ مولّد موقع StoryDZ</h1>
-  <span class="badge">HTML5 خالص</span>
-</header>
+<!-- شاشة تسجيل الدخول بكلمة المرور -->
+<div id="loginScreen" style="display:none; text-align:center; padding: 50px;">
+  <h1>🔒 لوحة تحكم StoryDZ</h1>
+  <p style="margin-bottom: 20px;">أدخل كلمة المرور للدخول (الافتراضية: storydz2026)</p>
+  <input type="password" id="passInput" placeholder="كلمة المرور" style="padding: 10px; font-size: 16px; width: 80%; max-width: 300px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;">
+  <br>
+  <button id="loginBtn" class="btn-primary" style="font-size: 1.2rem; padding: 10px 30px;">دخول</button>
+</div>
 
-<main class="admin-main">
+<!-- لوحة التحكم -->
+<div id="adminPanel" style="display:none;">
+  <header class="admin-header">
+    <h1>🏗️ لوحة تحكم StoryDZ</h1>
+    <button id="logoutBtn" class="btn-secondary">تسجيل خروج</button>
+  </header>
 
-  <section class="panel">
-    <h2>⚙️ الإعدادات العامة</h2>
-    <label>اسم الموقع
-      <input type="text" id="siteName" value="StoryDZ">
-    </label>
-    <label>النطاق (Domain)
-      <input type="text" id="domain" value="https://storydz.com">
-    </label>
-    <label>معرّف AdSense (ca-pub-...)
-      <input type="text" id="adsenseClient" placeholder="ca-pub-XXXXXXXXXXXXXXXX">
-    </label>
-    <label>البريد الإلكتروني للتواصل
-      <input type="email" id="contactEmail" value="contact@storydz.com">
-    </label>
-  </section>
+  <main class="admin-main">
+    <!-- إعدادات الذكاء الاصطناعي -->
+    <section class="panel" style="background: #f0fdf4; border-color: #22c55e;">
+      <h2>🔑 إعدادات مفتاح Gemini</h2>
+      <label>مفتاح API الخاص بـ Google Gemini:</label>
+      <input type="password" id="apiKeyInput" placeholder="AIzaSy..." style="width: 100%; padding: 8px;">
+      <button type="button" id="saveKeyBtn" class="btn-primary" style="margin-top:10px; background:#22c55e;">💾 حفظ المفتاح</button>
+      <p id="keyStatus" style="color: #666; font-size: 0.9rem; margin-top: 5px;"></p>
+    </section>
 
-  <section class="panel">
-    <h2>ℹ️ صفحة "من نحن"</h2>
-    <label>نص "من نحن" (عربي)
-      <textarea id="aboutAr" rows="3">StoryDZ منصة قصصية جزائرية تهدف إلى حفظ الحكايات الشعبية والقصص المعاصرة.</textarea>
-    </label>
-    <label>About text (English)
-      <textarea id="aboutEn" rows="2">StoryDZ is an Algerian storytelling platform dedicated to preserving folk tales.</textarea>
-    </label>
-    <label>Texte À propos (Français)
-      <textarea id="aboutFr" rows="2">StoryDZ est une plateforme algérienne de narration dédiée à la préservation des contes.</textarea>
-    </label>
-  </section>
+    <!-- الشات الذكي -->
+    <section class="panel" style="background: #e8f4fd; border-color: #2196f3;">
+      <h2>🤖 المساعد الذكي (Gemini)</h2>
+      <label>اطلب من المساعد كتابة قصة:</label>
+      <textarea id="aiPrompt" rows="2" placeholder="مثال: اكتب قصة قصيرة عن طفل في الصحراء..."></textarea>
+      <button type="button" id="askAiBtn" class="btn-primary" style="background: #2196f3; margin-top:10px;">✨ اطلب من الذكاء الاصطناعي</button>
+      <p id="aiStatus" style="color: #666; margin-top: 10px;"></p>
+    </section>
 
-  <section class="panel">
-    <h2>📚 القصص</h2>
-    <form id="storyForm">
-      <label>العنوان (عربي) <input type="text" id="titleAr" required></label>
-      <label>Title (English) <input type="text" id="titleEn"></label>
-      <label>Titre (Français) <input type="text" id="titleFr"></label>
-      <label>اسم الكاتب <input type="text" id="author" placeholder="اسم الكاتب"></label>
-      <label>اسم ملف الغلاف (مثال: cover-01.jpg) <input type="text" id="cover" value="cover-01.jpg"></label>
+    <!-- الإعدادات العامة -->
+    <section class="panel">
+      <h2>⚙️ الإعدادات العامة</h2>
+      <label>اسم الموقع <input type="text" id="siteName" value="StoryDZ"></label>
+      <label>النطاق (Domain) <input type="text" id="domain" value="https://storydz.com"></label>
+      <label>معرّف AdSense <input type="text" id="adsenseClient" placeholder="ca-pub-XXXXXXXXXXXXXXXX"></label>
+    </section>
+
+    <!-- إضافة / تعديل القصة -->
+    <section class="panel">
+      <h2>📚 إضافة / تعديل قصة</h2>
+      <form id="storyForm">
+        <label>العنوان (عربي) <input type="text" id="titleAr" required></label>
+        <label>Title (English) <input type="text" id="titleEn"></label>
+        <label>Titre (Français) <input type="text" id="titleFr"></label>
+        <label>اسم الكاتب <input type="text" id="author" placeholder="اسم الكاتب"></label>
+        
+        <label>صورة الغلاف (رابط URL) <input type="text" id="cover" placeholder="https://..."></label>
+        <label>رابط فيديو يوتيوب (اختياري) <input type="text" id="videoUrl" placeholder="https://youtube.com/watch?v=..."></label>
+        
+        <label>النص العربي <textarea id="contentAr" rows="6" required></textarea></label>
+        <label>English text <textarea id="contentEn" rows="4"></textarea></label>
+        <label>Texte français <textarea id="contentFr" rows="4"></textarea></label>
+        
+        <button type="submit" class="btn-primary">💾 حفظ القصة</button>
+      </form>
       
-      <label>النص العربي (الأساسي) <textarea id="contentAr" rows="5" required></textarea></label>
-      <label>English text <textarea id="contentEn" rows="3"></textarea></label>
-      <label>Texte français <textarea id="contentFr" rows="3"></textarea></label>
+      <h3 style="margin-top:1.5rem;">القصص المضافة (<span id="storyCount">0</span>)</h3>
+      <div id="storyList" class="story-list"></div>
+    </section>
+
+    <!-- التوليد -->
+    <section class="panel highlight">
+      <h2>🚀 توليد ونشر الموقع</h2>
+      <button id="generateAll" class="btn-generate">📦 توليد وتنزيل الموقع (ZIP)</button>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="admin.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة تحكم StoryDZ</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- شاشة تسجيل الدخول بكلمة المرور -->
+<div id="loginScreen" style="display:none; text-align:center; padding: 50px;">
+  <h1>🔒 لوحة تحكم StoryDZ</h1>
+  <p style="margin-bottom: 20px;">أدخل كلمة المرور للدخول (الافتراضية: storydz2026)</p>
+  <input type="password" id="passInput" placeholder="كلمة المرور" style="padding: 10px; font-size: 16px; width: 80%; max-width: 300px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;">
+  <br>
+  <button id="loginBtn" class="btn-primary" style="font-size: 1.2rem; padding: 10px 30px;">دخول</button>
+</div>
+
+<!-- لوحة التحكم -->
+<div id="adminPanel" style="display:none;">
+  <header class="admin-header">
+    <h1>🏗️ لوحة تحكم StoryDZ</h1>
+    <button id="logoutBtn" class="btn-secondary">تسجيل خروج</button>
+  </header>
+
+  <main class="admin-main">
+    <!-- إعدادات الذكاء الاصطناعي -->
+    <section class="panel" style="background: #f0fdf4; border-color: #22c55e;">
+      <h2>🔑 إعدادات مفتاح Gemini</h2>
+      <label>مفتاح API الخاص بـ Google Gemini:</label>
+      <input type="password" id="apiKeyInput" placeholder="AIzaSy..." style="width: 100%; padding: 8px;">
+      <button type="button" id="saveKeyBtn" class="btn-primary" style="margin-top:10px; background:#22c55e;">💾 حفظ المفتاح</button>
+      <p id="keyStatus" style="color: #666; font-size: 0.9rem; margin-top: 5px;"></p>
+    </section>
+
+    <!-- الشات الذكي -->
+    <section class="panel" style="background: #e8f4fd; border-color: #2196f3;">
+      <h2>🤖 المساعد الذكي (Gemini)</h2>
+      <label>اطلب من المساعد كتابة قصة:</label>
+      <textarea id="aiPrompt" rows="2" placeholder="مثال: اكتب قصة قصيرة عن طفل في الصحراء..."></textarea>
+      <button type="button" id="askAiBtn" class="btn-primary" style="background: #2196f3; margin-top:10px;">✨ اطلب من الذكاء الاصطناعي</button>
+      <p id="aiStatus" style="color: #666; margin-top: 10px;"></p>
+    </section>
+
+    <!-- الإعدادات العامة -->
+    <section class="panel">
+      <h2>⚙️ الإعدادات العامة</h2>
+      <label>اسم الموقع <input type="text" id="siteName" value="StoryDZ"></label>
+      <label>النطاق (Domain) <input type="text" id="domain" value="https://storydz.com"></label>
+      <label>معرّف AdSense <input type="text" id="adsenseClient" placeholder="ca-pub-XXXXXXXXXXXXXXXX"></label>
+    </section>
+
+    <!-- إضافة / تعديل القصة -->
+    <section class="panel">
+      <h2>📚 إضافة / تعديل قصة</h2>
+      <form id="storyForm">
+        <label>العنوان (عربي) <input type="text" id="titleAr" required></label>
+        <label>Title (English) <input type="text" id="titleEn"></label>
+        <label>Titre (Français) <input type="text" id="titleFr"></label>
+        <label>اسم الكاتب <input type="text" id="author" placeholder="اسم الكاتب"></label>
+        
+        <label>صورة الغلاف (رابط URL) <input type="text" id="cover" placeholder="https://..."></label>
+        <label>رابط فيديو يوتيوب (اختياري) <input type="text" id="videoUrl" placeholder="https://youtube.com/watch?v=..."></label>
+        
+        <label>النص العربي <textarea id="contentAr" rows="6" required></textarea></label>
+        <label>English text <textarea id="contentEn" rows="4"></textarea></label>
+        <label>Texte français <textarea id="contentFr" rows="4"></textarea></label>
+        
+        <button type="submit" class="btn-primary">💾 حفظ القصة</button>
+      </form>
       
-      <button type="submit" class="btn-primary">➕ إضافة القصة</button>
-    </form>
-    <h3 style="margin-top:1.5rem;">القصص المضافة (<span id="storyCount">0</span>)</h3>
-    <div id="storyList" class="story-list"></div>
-  </section>
+      <h3 style="margin-top:1.5rem;">القصص المضافة (<span id="storyCount">0</span>)</h3>
+      <div id="storyList" class="story-list"></div>
+    </section>
 
-  <section class="panel highlight">
-    <h2>🚀 توليد الموقع</h2>
-    <p>سيتم توليد كل ملفات HTML (عربي، إنجليزي، فرنسي) في ملف ZIP واحد.</p>
-    <button id="generateAll" class="btn-generate">📦 توليد وتنزيل الموقع (ZIP)</button>
-  </section>
-
-</main>
+    <!-- التوليد -->
+    <section class="panel highlight">
+      <h2>🚀 توليد ونشر الموقع</h2>
+      <button id="generateAll" class="btn-generate">📦 توليد وتنزيل الموقع (ZIP)</button>
+    </section>
+  </main>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="admin.js"></script>
