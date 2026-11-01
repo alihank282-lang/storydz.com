@@ -41,7 +41,7 @@ document.getElementById('saveKeyBtn').addEventListener('click', () => {
   localStorage.setItem('geminiKey', geminiKey); document.getElementById('keyStatus').textContent = '✅ تم الحفظ';
 });
 
-// ============ 4. محرك توليد الصفحات (CSS) ============
+// ============ 4. محرك توليد الصفحات ============
 const CSS_CONTENT = `
 :root { --bg:#fdfaf5; --text:#1a1a1a; --accent:#b85c38; --muted:#6b6b6b; --border:#e8e0d5; }
 * { box-sizing:border-box; margin:0; padding:0; }
@@ -107,7 +107,6 @@ function buildStory(lang, s, c) {
   return buildHead(lang, s[tk], s[ck]?.slice(0,150) || '', c) + buildHeader(lang, c) + `<main class="container"><article><h1>${s[tk]}</h1><p style="color:#666;">${s.author} · ${s.date}</p>${s.cover ? `<img src="${s.cover}">` : ''}${videoHtml}${paragraphs}${adMid}</article></main>` + buildFooter();
 }
 
-// دالة التوليد والتنزيل
 async function generateAndDownload(typesToGenerate) {
   const zip = new JSZip();
   zip.file('css/style.css', CSS_CONTENT);
@@ -128,70 +127,82 @@ async function generateAndDownload(typesToGenerate) {
   a.click();
 }
 
-// ============ 5. الشات الذكي (ينشئ الصفحات ويعدل الموقع) ============
+// ============ 5. الشات الذكي (Gemini 2.5 Flash) ============
 document.getElementById('askAiBtn').addEventListener('click', async () => {
   if (!geminiKey) return alert('أدخل مفتاح Gemini أولاً.');
   const prompt = document.getElementById('aiPrompt').value;
   if (!prompt) return alert('اكتب أمرك للمساعد أولاً');
   
   const status = document.getElementById('aiStatus');
-  status.textContent = '⏳ جاري تنفيذ الأمر...';
+  status.textContent = '⏳ جاري التفكير...';
   status.style.color = '#2196f3';
   
-  // تعليمات صارمة للذكاء الاصطناعي ليفهم الأوامر
-  const context = `أنت مدير ذكي لموقع قصص. بيانات الموقع: ${JSON.stringify(siteData)}.
+  const systemPrompt = `أنت مدير ذكي لموقع قصص. بيانات الموقع الحالية: ${JSON.stringify(siteData)}.
 أمر المستخدم: "${prompt}".
-يجب أن ترد بصيغة JSON صالحة فقط تحتوي على "action" و "data".
-الأوامر الممكنة (action):
-- "generate_home": لتوليد الصفحة الرئيسية (data: {})
-- "generate_about": لتوليد صفحة من نحن (data: {})
-- "generate_contact": لتوليد صفحة اتصل بنا (data: {})
-- "generate_all": لتوليد كل الموقع (data: {})
-- "add_story": لإضافة قصة (data: {id, titleAr, titleEn, titleFr, contentAr, contentEn, contentFr, author, cover})
-- "delete_story": لحذف قصة (data: {id})
-- "edit_story": لتعديل قصة (data: {id, field, newValue})
-- "add_adsense": لإضافة كود AdSense (data: {code})
-- "update_config": لتحديث إعدادات الموقع (data: {field, value})
-لا تكتب أي شيء آخر خارج الـ JSON.`;
+مهمتك هي الرد بصيغة JSON صالحة فقط (بدون علامات \`\`\` أو أي نصوص أخرى).
+مفاتيح الـ JSON المطلوبة:
+- "action": (اختر واحدة من: generate_home, generate_about, generate_contact, generate_all, add_story, delete_story, add_adsense, chat_reply)
+- "data": (بيانات إضافية حسب الأمر، مثلاً للقصة {id, titleAr, titleEn, titleFr, contentAr, contentEn, contentFr, author, cover}، وللإعلان {code})
+- "message": (رسالة نصية تشرح ما فعلته للمستخدم)
+
+إذا طلب المستخدم إنشاء الصفحة الرئيسية، اجعل action هو "generate_home".
+إذا سألك سؤالاً عاماً أو لم تفهم أمره، اجعل action هو "chat_reply" واكتب ردك في message.`;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: context }] }], generationConfig: { responseMimeType: "application/json" } })
+    // استخدام gemini-2.5-flash (الأحدث)
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+      method: "POST", 
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        contents: [{ parts: [{ text: systemPrompt }] }], 
+        generationConfig: { responseMimeType: "application/json" } 
+      })
     });
     
     const data = await response.json();
+    
+    if (!data.candidates || !data.candidates[0]) {
+      throw new Error("المفتاح غير صالح أو الحد الأقصى للاستخدام قد انتهى.");
+    }
+
     const aiText = data.candidates[0].content.parts[0].text;
-    const actionData = JSON.parse(aiText);
+    let actionData;
+    
+    try {
+      actionData = JSON.parse(aiText);
+    } catch (e) {
+      // في حال فشل تحويل الرد إلى JSON، نعتبره رسالة نصية عادية
+      actionData = { action: "chat_reply", message: aiText };
+    }
     
     // تنفيذ الأوامر
     if (actionData.action === 'generate_home' || actionData.action === 'generate_about' || actionData.action === 'generate_contact') {
       const type = actionData.action.split('_')[1];
       await generateAndDownload([type]);
-      status.textContent = `✅ تم توليد صفحة (${type}) وتنزيلها كـ ZIP. قم برفعها إلى GitHub.`;
+      status.textContent = `✅ تم توليد صفحة (${type}) وتنزيلها. ارفعها إلى GitHub.`;
     } 
     else if (actionData.action === 'generate_all') {
       await generateAndDownload(['home', 'about', 'contact', 'stories']);
       status.textContent = '✅ تم توليد الموقع بالكامل وتنزيله.';
     }
     else if (actionData.action === 'add_story') {
-      siteData.stories.push(actionData.data); saveData();
-      status.textContent = '✅ تمت إضافة القصة الجديدة.';
+      if(actionData.data && actionData.data.titleAr) {
+        siteData.stories.push(actionData.data); saveData();
+        status.textContent = '✅ تمت إضافة القصة الجديدة للذاكرة.';
+      } else {
+        status.textContent = '⚠️ فشل في صياغة القصة، جرب طلباً آخر.';
+      }
     } 
     else if (actionData.action === 'delete_story') {
       siteData.stories = siteData.stories.filter(s => s.id !== actionData.data.id); saveData();
       status.textContent = '✅ تم حذف القصة.';
     }
-    else if (actionData.action === 'edit_story') {
-      let s = siteData.stories.find(st => st.id === actionData.data.id);
-      if (s) { s[actionData.data.field] = actionData.data.newValue; saveData(); status.textContent = '✅ تم التعديل.'; }
-    }
     else if (actionData.action === 'add_adsense') {
       siteData.adsenseCode = actionData.data.code; saveData();
-      status.textContent = '✅ تم إضافة كود AdSense. سيتم تضمينه عند التوليد.';
+      status.textContent = '✅ تم حفظ كود AdSense.';
     }
     else {
-      status.textContent = '⚠️ لم أفهم الأمر، جرب: "أنشئ الصفحة الرئيسية" أو "أضف قصة".';
+      status.textContent = '🤖 المساعد يقول: ' + (actionData.message || 'لم أفهم طلبك.');
     }
     
     status.style.color = '#22c55e';
@@ -202,7 +213,7 @@ document.getElementById('askAiBtn').addEventListener('click', async () => {
   }
 });
 
-// ============ 6. التوليد اليدوي (الزر القديم) ============
+// ============ 6. التوليد اليدوي ============
 document.getElementById('generateAll').addEventListener('click', () => generateAndDownload(['home', 'about', 'contact', 'stories']));
 document.getElementById('storyForm').addEventListener('submit', (e) => {
   e.preventDefault();
